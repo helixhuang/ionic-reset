@@ -1,0 +1,37 @@
+{
+  "name": "ionic-reset",
+  "version": "0.0.1",
+  "author": {
+    "name": "Helix Huang",
+    "email": "huangjianping+github@gmail.com"
+  },
+  "description": "Ionic reset",
+  "main": "index.js",
+  "preferGlobal": "true",
+  "directories": {
+    "bin": "./bin"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/helixhuang/ionic-reset.git"
+  },
+  "keywords": [
+    "cordova",
+    "icon",
+    "state",
+    "reset"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/helixhuang/ionic-reset/issues"
+  },
+  "homepage": "https://github.com/helixhuang/ionic-reset",
+  "dependencies": {
+    "cli-spinner": "^0.2.8",
+    "colors": "^0.6.2",
+    "command-line-args": "^4.0.7",
+    "fs-extra": "^0.30.0",
+    "q": "^1.0.1",
+    "underscore": "^1.6.0"
+  }
+}
