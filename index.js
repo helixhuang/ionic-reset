@@ -6,6 +6,24 @@ var Q = require('q');
 var exec = require('child_process').exec;
 var Spinner = require('cli-spinner').Spinner;
 
+const commandLineArgs = require('command-line-args')
+
+const optionDefinitions = [{
+        name: 'reset',
+        type: Boolean
+    },
+    {
+        name: 'restore',
+        type: Boolean,
+    }
+]
+
+const options = commandLineArgs(optionDefinitions);
+
+var isEmpty = (object) => {
+    return JSON.stringify(object) == "{}";
+}
+
 /**
  * @var {Object} console utils
  */
@@ -19,7 +37,7 @@ display.error = function (str) {
     console.log('  ' + str);
 };
 display.warn = function (str) {
-    str = '!  '.magenta + str;
+    str = '!  '.yellow + str;
     console.log('  ' + str);
 };
 display.header = function (str) {
@@ -121,7 +139,12 @@ var addPlatforms = function () {
             exec("cordova platform add " + platform, function (err) {
                 spinner.stop(true);
                 if (err) {
-                    deferred.reject(err);
+                    if (err.code == 1) {
+                        display.warn("Platform " + platform + " already added");
+                        deferred.resolve();
+                    } else {
+                        deferred.reject(err);
+                    }
                 } else {
                     display.success("Success add platform " + platform);
                     deferred.resolve();
@@ -143,7 +166,7 @@ var addPlugins = function () {
             spinner.setSpinnerString('|/-\\');
             spinner.start();
             var varStr = "";
-            for(var k in pkg.cordova.plugins[plugin]) {
+            for (var k in pkg.cordova.plugins[plugin]) {
                 var v = pkg.cordova.plugins[plugin][k];
                 varStr = varStr + ' --variable ' + k + '="' + v + '" ';
             }
@@ -178,8 +201,16 @@ var clearConfig = function () {
 display.header('Reset Cordova Platforms & Plugins');
 readPackage()
     .then(copyConfig)
-    .then(removePlatforms)
-    .then(removePlugins)
+    .then(function () {
+        if (isEmpty(options) || options.reset) {
+            return removePlatforms();
+        }
+    })
+    .then(function () {
+        if (isEmpty(options) || options.reset) {
+            return removePlugins();
+        }
+    })
     .then(addPlatforms)
     .then(addPlugins)
     .then(clearConfig)
