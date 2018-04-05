@@ -18,6 +18,10 @@ display.error = function (str) {
     str = '✗  '.red + str;
     console.log('  ' + str);
 };
+display.warn = function (str) {
+    str = '!  '.magenta + str;
+    console.log('  ' + str);
+};
 display.header = function (str) {
     console.log('');
     console.log(' ' + str.cyan.underline);
@@ -58,14 +62,13 @@ var removePlatforms = function () {
     pkg.cordova.platforms.forEach(platform => {
         var removePlatform = function () {
             var deferred = Q.defer();
-            display.success("cordova platform remove " + platform);
-            var spinner = new Spinner('  %s  processing.. '.green);
+            var spinner = new Spinner(('  %s  Removing platform ' + platform + ' .. ').yellow);
             spinner.setSpinnerString('|/-\\');
             spinner.start();
             exec("cordova platform remove " + platform, function (err) {
                 spinner.stop(true);
                 if (err) {
-                    deferred.reject(err);
+                    deferred.resolve(err);
                 } else {
                     display.success("Success remove platform " + platform);
                     deferred.resolve();
@@ -83,14 +86,18 @@ var removePlugins = function () {
     Object.keys(pkg.cordova.plugins).forEach(plugin => {
         var removePlugin = function () {
             var deferred = Q.defer();
-            display.success("cordova plugin remove " + plugin);
-            var spinner = new Spinner('  %s  processing.. '.green);
+            var spinner = new Spinner(('  %s  Removing plugin ' + plugin + ' .. ').yellow);
             spinner.setSpinnerString('|/-\\');
             spinner.start();
             exec("cordova plugin remove " + plugin, function (err) {
                 spinner.stop(true);
                 if (err) {
-                    deferred.resolve(err);
+                    if (err.code == 1) {
+                        display.warn("Plugin " + plugin + " is not present");
+                        deferred.resolve();
+                    } else {
+                        deferred.reject(err);
+                    }
                 } else {
                     display.success("Success remove plugin " + plugin);
                     deferred.resolve();
@@ -108,8 +115,7 @@ var addPlatforms = function () {
     pkg.cordova.platforms.forEach(platform => {
         var addPlatform = function () {
             var deferred = Q.defer();
-            display.success("cordova platform add " + platform);
-            var spinner = new Spinner('  %s  processing.. '.green);
+            var spinner = new Spinner(('  %s  Adding platform ' + platform + ' .. ').yellow);
             spinner.setSpinnerString('|/-\\');
             spinner.start();
             exec("cordova platform add " + platform, function (err) {
@@ -133,11 +139,15 @@ var addPlugins = function () {
     Object.keys(pkg.cordova.plugins).forEach(plugin => {
         var addPlugin = function () {
             var deferred = Q.defer();
-            display.success("cordova plugin add " + plugin);
-            var spinner = new Spinner('  %s  processing.. '.green);
+            var spinner = new Spinner(('  %s  Adding plugin ' + plugin + '.. ').yellow);
             spinner.setSpinnerString('|/-\\');
             spinner.start();
-            exec("cordova plugin add " + plugin, function (err) {
+            var varStr = "";
+            for(var k in pkg.cordova.plugins[plugin]) {
+                var v = pkg.cordova.plugins[plugin][k];
+                varStr = varStr + ' --variable ' + k + '="' + v + '" ';
+            }
+            exec("cordova plugin add " + plugin + varStr, function (err) {
                 spinner.stop(true);
                 if (err) {
                     deferred.reject(err);
@@ -155,13 +165,13 @@ var addPlugins = function () {
 
 var clearConfig = function () {
     var deferred = Q.defer();
-    exec("cordova platform ls", {}, function () {
-        console.log("OK");
-        deferred.resolve();
-    }, function () {
-        console.log("FAILD");
-        deferred.resolve();
-    })
+    fs.unlink("temp.json", function (err) {
+        if (err) {
+            deferred.reject(err);
+        } else {
+            deferred.resolve();
+        }
+    });
     return deferred.promise;
 };
 
@@ -172,6 +182,7 @@ readPackage()
     .then(removePlugins)
     .then(addPlatforms)
     .then(addPlugins)
+    .then(clearConfig)
     .catch(function (err) {
         if (err) {
             console.log(err);
