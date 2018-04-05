@@ -1,6 +1,6 @@
 {
   "name": "ionic-reset",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": {
     "name": "Helix Huang",
     "email": "huangjianping+github@gmail.com"
@@ -17,7 +17,7 @@
   },
   "keywords": [
     "cordova",
-    "icon",
+    "ionic",
     "state",
     "reset"
   ],
